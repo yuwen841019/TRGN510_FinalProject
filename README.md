@@ -11,13 +11,13 @@
 - This is the link to Vignettes: https://www.bioconductor.org/packages/devel/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
 
 ## Data
-- 
+- This link is where I got the data. [GDC Data Protal](https://portal.gdc.cancer.gov). Ten data files of white male clear cell renal cell carcinoma stage i and ten data files of black/African American male clear cell renal cell carcinoma stage i.
 
 ## Milestone 1
-
+- I want to filter ten data files of white male and ten data files of black/African American from GDC Data Portal. Then, I want to download the data files in HT-seq format and import them into R.
 
 ## Milestone 2
-
+- I want to analyze tha data that can turn raw counts into biological insights and generate some plots.
 
 ## Deliverable:
 - R Markdown
