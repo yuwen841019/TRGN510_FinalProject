@@ -7,7 +7,7 @@
 
 ## Overview of project
 - RNA-Seq is now widely used as a tool for gene expression profiling. It detects differentially expressed genes between conditions. For my project, I am looking at clear cell renal cell carcinoma and people who self-report is while male versus black/African American.
-- The objective is to identify differentially expressed genes by using Bioconductor.
+- The objective is to identify differentially expressed genes by using Bioconductor and pathway using limma.
 - This is the link to Vignettes: https://www.bioconductor.org/packages/devel/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
 
 ## Data
