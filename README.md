@@ -9,7 +9,7 @@
 - RNA-Seq is now widely used as a tool for gene expression profiling. It detects differentially expressed genes between conditions. For my project, I am looking at clear cell renal cell carcinoma and people who self-report is while male versus black/African American.
 - The objective is to identify differentially expressed genes by using Bioconductor and pathway using limma.
 - This is the link to Vignettes: https://www.bioconductor.org/packages/devel/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
-- After discussing with the professor, I decided to look at all stage of clear cell renal cell carcinoma instead of only stage i because the data might not be enough for me to analyze.
+- After discussing with the professor, I decided to look at all stages of clear cell renal cell carcinoma instead of only stage i because the data might not be enough for me to analyze.
 
 ## Data
 - This link is where I got the data. [GDC Data Protal](https://portal.gdc.cancer.gov). 
