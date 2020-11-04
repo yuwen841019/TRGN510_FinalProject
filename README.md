@@ -46,7 +46,7 @@
   - 38096336-4257-481c-b653-91804af5b2a1.htseq.counts.gz
 
 ## Milestone 1
-- I want to filter ten data files of white male and ten data files of black/African American from GDC Data Portal. Then, I want to download the data files in HT-seq format and import them into R.
+- I want to filter fifteen data files of white male and fifteen data files of black/African American from GDC Data Portal. Then, I want to download the data files in HT-seq format and import them into R.
 
 ## Milestone 2
 - I want to analyze tha data that can turn raw counts into biological insights and generate some plots.
