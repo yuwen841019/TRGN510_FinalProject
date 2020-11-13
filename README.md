@@ -9,6 +9,7 @@
 - RNA-Seq is now widely used as a tool for gene expression profiling. It detects differentially expressed genes between conditions. For my project, I am looking at clear cell renal cell carcinoma and people who self-report is while male versus black/African American.
 - The objective is to identify differentially expressed genes by using Bioconductor and pathway using limma.
 - This is the link to Vignettes: https://www.bioconductor.org/packages/devel/workflows/vignettes/RNAseq123/inst/doc/limmaWorkflow.html
+- After discussing with the professor, I decided to look at all stages of clear cell renal cell carcinoma instead of only stage i because the data might not be enough for me to analyze.
 
 ## Data
 - This link is where I got the data. [GDC Data Protal](https://portal.gdc.cancer.gov). 
@@ -46,7 +47,8 @@
   - 38096336-4257-481c-b653-91804af5b2a1.htseq.counts.gz
 
 ## Milestone 1
-- I want to filter fifteen data files of white male and fifteen data files of black/African American from GDC Data Portal. Then, I want to download the data files in HT-seq format and import them into R.
+- I want to filter fifteen data files of white male and fifteen data files of black/African American from GDC Data Portal. Then, I want to download the data files in HT-seq format and import the data into R. Next, I want to organize the sample information and gene annotations.
+- Update on 11/03/2020: This milestone is completed.
 
 ## Milestone 2
 - I want to analyze tha data that can turn raw counts into biological insights and generate some plots.
