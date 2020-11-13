@@ -6,7 +6,7 @@ output: html_document
 ## Find and set working directory
 ```{r}
 getwd()
-setwd("/Users/wendy/Desktop/finalproject")
+setwd("/Users/wendy/Desktop/TRGN510_FinalProject")
 ```
 
 ## Load required packages
@@ -20,12 +20,16 @@ library(Homo.sapiens)
 ## Load in the data
 Black male and white male data are in different folders, so I make a 2D-list. I put all the file names in the black male folder in the first row of 2D-list, and all the file names in the white male folder in the second row of 2D-list. Then, I make a for loop to read each file in the folders.
 ```{r}
-path <- paste("/Users/wendy/Desktop/final_project",sep="/")
+path <- paste("/Users/wendy/Desktop/TRGN510_FinalProject",'data',sep="/")
+
 folders <- list.dirs(path)
-folders <- folders[(length(folders)-1):length(folders)]
+folders <- folders[2:length(folders)]
 store <- list()
 for(i in 1:length(folders)){
   store = cbind(store, list.files(folders[i],pattern = "htseq.counts"))
+}
+for(i in 1:length(folders)){
+  store[,i] = paste(folders[i],store[,i],sep = '/')
 }
 ```
 
@@ -51,6 +55,7 @@ for( i in 1:(length(samplenames)/2)){
 for(i in 1:(length(samplenames)/2)){
   samplenames[length(samplenames)/2+i] = paste(samplenames[length(samplenames)/2+i], as.character(i), sep='_')
 }
+sampleNames
 colnames(x) <- samplenames
 ```
 
@@ -62,23 +67,220 @@ x$samples
 ```
 
 ## Organize gene annotations
-Remove the all the digits after the decimal of Ensembl name, so it looks more similar to the key provided.
+I removed the all the digits after the decimal of Ensembl name, so it looks more similar to the key provided.
 ```{r}
 geneid <- rownames(x)
 geneid <-gsub("\\.\\d+$", "", geneid)
 head(geneid)
 ```
 
-I load "Homo.sapiens" library to get the information for this dataframe. The GeneIDs are related to the gene symbol and chromosome number.
+I loaded "Homo.sapiens" library to get the information for this dataframe. The GeneIDs are related to the gene symbol and chromosome number.
 ```{r}
 genes <- select(Homo.sapiens, keys=geneid, columns=c("SYMBOL", "TXCHROM"), keytype="ENSEMBL")
 head(genes)
 ```
 
-Remove the duplicated genes from the dataset.
+I removed the duplicated genes from the dataset.
 ```{r}
 genes <- genes[!duplicated(genes$ENSEMBL),]
 x$genes <- genes
 x
 ```
+
+## Data pre-processing
+## Transformations from the raw-scale
+I transformed the data from its raw form to a scale that accounts for such library size differences. "cpm" means counts per million, and "lcpm" means log of counts per million.
+```{r}
+cpm <- cpm(x)
+lcpm <- cpm(x, log=TRUE)
+```
+
+L is the average library size in millions, and M is the median of the library size in millions. For this dataset, the average library size is about 87.8 million.
+```{r}
+L <- mean(x$samples$lib.size) * 1e-6
+M <- median(x$samples$lib.size) * 1e-6
+c(L, M)
+```
+
+This is the summary of the lcpm calculation.
+```{r}
+summary(lcpm)
+```
+
+## Removing genes that are lowly expressed
+All datasets include genes that are expressed and not expressed, so we want to remove some genes that are lowly expressed and do not contribute to the statistical analysis.
+```{r}
+table(rowSums(x$counts==0)==9)
+```
+
+EdgeR package provides an easy way to remove these lowly expressed genes.
+```{r}
+keep.exprs <- filterByExpr(x, group=group)
+x <- x[keep.exprs,, keep.lib.sizes=FALSE]
+dim(x)
+```
+
+The number of genes is reduced from 60487 to 20902. The `RColorBrewer` package allows us to create the figure. The following code is to produce the figure that is raw data and filtered data.
+```{r}
+lcpm.cutoff <- log2(10/M + 2/L)
+library(RColorBrewer)
+nsamples <- ncol(x)
+col <- brewer.pal(nsamples, "Paired")
+par(mfrow=c(1,2))
+plot(density(lcpm[,1]), col=col[1], lwd=2, ylim=c(0,0.26), las=2, main="", xlab="")
+title(main="A. Raw data", xlab="Log-cpm")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+den <- density(lcpm[,i])
+lines(den$x, den$y, col=col[i], lwd=2)
+}
+legend("topright", samplenames, text.col=col, bty="n")
+lcpm <- cpm(x, log=TRUE)
+plot(density(lcpm[,1]), col=col[1], lwd=2, ylim=c(0,0.26), las=2, main="", xlab="")
+title(main="B. Filtered data", xlab="Log-cpm")
+abline(v=lcpm.cutoff, lty=3)
+for (i in 2:nsamples){
+den <- density(lcpm[,i])
+lines(den$x, den$y, col=col[i], lwd=2)
+}
+legend("topright", samplenames, text.col=col, bty="n")
+```
+
+## Normalizing gene expression distributions
+EdgeR package provides `calcNormFactors` function for statistical analysis. The normalization factors are stored in a dataset called `norm.factors`.
+```{r}
+x <- calcNormFactors(x, method = "TMM")
+x$samples$norm.factors
+```
+
+```{r}
+x2 <- x
+x2$samples$norm.factors <- 1
+x2$counts[,1] <- ceiling(x2$counts[,1]*0.05)
+x2$counts[,2] <- x2$counts[,2]*5
+```
+
+The plot below shows the expression distribution of samples for unnormalized data.
+```{r}
+par(mfrow=c(1,2))
+lcpm <- cpm(x2, log=TRUE)
+boxplot(lcpm, las=2, col=col, main="")
+title(main="A. Example: Unnormalised data",ylab="Log-cpm")
+x2 <- calcNormFactors(x2)  
+x2$samples$norm.factors
+```
+
+The plot below shows the expression distribution of samples for normalized data.
+```{r}
+lcpm <- cpm(x2, log=TRUE)
+boxplot(lcpm, las=2, col=col, main="")
+title(main="B. Example: Normalised data",ylab="Log-cpm")
+```
+
+## Unsupervised clustering of samples
+The MDS plot is used to check the similarities and dissimilarities in a sample. The differences can show you the expected results of the differential expression analysis. The "plotMDS" function allows us to create the graph.
+```{r}
+library(limma)
+library(Glimma)
+lcpm <- cpm(x, log=TRUE)
+par(mfrow=c(1,2))
+group
+levels(group) <-  brewer.pal(nlevels(group), "Set1")
+col.group <- as.character(group)
+col.group <- c("purple","orange")[group]
+plotMDS(lcpm, labels=group, col=col.group)
+title(main="A. Sample groups")
+```
+
+```{r}
+glMDSPlot(lcpm,groups = group)
+```
+
+## Differential Expression Analysis
+## Create a design matrix and contrasts
+This is the differential expression analysis. First, I create a design matrix with both groups of data.
+```{r}
+design <- model.matrix(~0+group)
+colnames(design) <- gsub("group", "", colnames(design))
+design
+```
+
+This is the contrasts for the two groups created and stored in a matrix.
+```{r}
+contr.matrix <- makeContrasts(
+   BlackVsWhite = black_male-white_male, 
+   levels = colnames(design))
+contr.matrix
+```
+
+This is the voom plot.
+```{r}
+par(mfrow=c(1,2))
+v <- voom(x, design, plot=TRUE)
+v
+```
+
+This is our final mean-variance trend.
+```{r}
+vfit <- lmFit(v, design)
+vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
+efit <- eBayes(vfit)
+plotSA(efit, main="Final model: Mean-variance trend")
+```
+
+T-statistics allows for a more stringent definition of significance to be applied to the data. Using the "summary and decide test function", we are looking at which genes are down-regulated and up-regulated.
+```{r}
+summary(decideTests(efit))
+```
+```{r}
+tfit <- treat(vfit, lfc=0.3)
+dt <- decideTests(tfit)
+summary(dt)
+```
+```{r}
+de.common <- which(dt[,1]!=0)
+length(de.common)
+```
+```{r}
+head(tfit$genes$SYMBOL[de.common], n=20)
+```
+```{r}
+vennDiagram(dt[,1], circle.col=c("turquoise", "salmon"))
+```
+```{r}
+write.fit(tfit, dt, file="results.txt")
+```
+
+I use the "toptreat" function. I list the genes that are most differentially expressed.
+```{r}
+Black.vs.White <- topTreat(tfit, coef=1, n=Inf)
+head(Black.vs.White)
+```
+
+I use "plotMD" function to summarize the genes. The log fold change is plot against the log counts per million.
+```{r}
+plotMD(tfit, column=1, status=dt[,1], main=colnames(tfit)[1], 
+       xlim=c(-8,13))
+```
+
+The same, we can use glimma to make this interactive.
+```{r}
+glMDPlot(tfit, coef=1, status=dt, main=colnames(tfit)[1],
+         side.main="ENSEMBL", counts=lcpm, groups=group, launch=TRUE)
+```
+
+Finally, I want to plot the differential expression as a heatmap. Heatmap.plus is a library that allows for the creation of heatmaps for larger datasets.
+```{r}
+library(gplots)
+library(heatmap.plus)
+Black.vs.White.topgenes <- Black.vs.White$ENSEMBL[1:40]
+i <- which(v$genes$ENSEMBL %in% Black.vs.White.topgenes)
+mycol <- colorpanel(1000,"blue","white","red")
+par(cex.main=0.8,mar=c(1,1,1,1))
+heatmap.plus(lcpm[i,],  scale="row", labRow=v$genes$SYMBOL[i], labCol=group, col=mycol, cexRow=1,cexCol=0.2, margins = c(8,6), main="HeatMap")
+```
+
+
+
+
 
