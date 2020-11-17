@@ -280,7 +280,22 @@ par(cex.main=0.8,mar=c(1,1,1,1))
 heatmap.plus(lcpm[i,],  scale="row", labRow=v$genes$SYMBOL[i], labCol=group, col=mycol, cexRow=1,cexCol=0.2, margins = c(8,6), main="HeatMap")
 ```
 
+In this heatmap, red regions are samples with high expression, and blue regions are samples with relatively low expression.
 
+## Gene set testing with camera
+I use the camera method to analysize with some gene set testing. The gene set is from the Broad Institute’s Molecular Signatures Database (MSigDB). You can download the Rdata from this link. <http://bioinf.wehi.edu.au/software/MSigDB/> After you download, make sure to move it to your working directory.
+```{r}
+load("human_c2_v5p2.rdata")
+idx <- ids2indices(Hs.c2, rownames(v$genes))
+cam.BlackVsWhite <- camera(v,idx,design,contrast=contr.matrix[,1])
+head(cam.BlackVsWhite, 7)
+```
+
+This barcode plot shows the relative enrichment of black male versus white male in clear cell renal cell carcinoma.
+```{r}
+barcodeplot(efit$t[,1], index=idx$LIM_MAMMARY_LUMINAL_MATURE_UP, 
+            index2=idx$LIM_MAMMARY_LUMINAL_MATURE_DN, main="BlackVsWhite")
+```
 
 
 
