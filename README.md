@@ -52,6 +52,7 @@
 
 ## Milestone 2
 - I want to analyze tha data that can turn raw counts into biological insights and generate some plots.
+- Update on 11/12/2020: This milestone is completed. After discussing with Dr. David Craig, I decided to lower the differential expressed genes, so I changed the log-fold-change (lfc) value from 1 to 0.3.
 
 ## Deliverable:
 - R Markdown
